@@ -94,18 +94,19 @@ def get_all_available_chapter(soup):
 
 def get_chapter(link: str):
     
-    soup = get_page("")  
+    soup = get_page(link)  
     if soup[0]:
-       html = (str(soup[1])).split("src=", 1)
-       for i in html:
-           print(i, '\n')
-           break
-    
-    
+       return find_src(str(soup[1]))
 
 
-# get_manga(
-#     soup = get_page(f"{read_link()}1")[1],
-#     con = ''
-# )
-get_chapter("")
+def find_src(soup: str):
+    links = []
+    split = soup.split("https://", 1)
+    while len(split) == 2:
+        source = split[1].split('"')[0]
+        if source.__contains__(".jpeg"):
+            links.append(f"https://{source}")
+        split = split[1].split("https://", 1)
+    return links
+    
+
