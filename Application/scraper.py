@@ -41,10 +41,10 @@ def get_manga(soup: BeautifulSoup, con) -> None:
         title, thumnpnail = get_title_thumpnail(str(manga.find_all('img')))
         genre = get_genre(str(manga.find_all("div", {"class": "flex flex-wrap text-xs opacity-70"})))
         main_page = get_main_page(str(manga.find_all("a", {"class": "link-hover link-pri"})))        
-        chapters = get_main_page_info(main_page)
+        status, chapters = get_main_page_info(main_page)
+        print(f"Title: {title}\nGenre: {genre}\nThumpnail: {thumnpnail}\nMain Page: {main_page} \nChapter: {chapters}\n" )
         break
         
-        # print(f"Title: {title}, Genre: {genre}\nThumpnail: {thumnpnail}\nMain Page: {main_page} \n" )
 
 def get_title_thumpnail(soup: str) -> tuple:
     thumpnail = soup.split('src="')[-1].split('"')[0]
@@ -84,13 +84,12 @@ def get_main_page_info(link: str):
 def get_all_available_chapter(soup):
 
     chapters = {}
-    for chapter in soup.find_all("div", {"class": "px-2 py-2 flex flex-wrap justify-between hover:bg-accent/5 border-b border-base-300/50 group-[.flex-col]:last:border-b-0 group-[.flex-col-reverse]:first:border-b-0"}):
-        chapter = chapter.find_all("a", {"class": "link-hover link-primary visited:text-accent"})
+    for chapter in soup.find_all("a", {"class": "link-hover link-primary visited:text-accent"}):
         chapter_number = (str(chapter)).split('">')[-1].split("<")[0]
-        chapter_link = (str(chapter)).split('href="')[1].split('" ')[0]
-        chapters[chapter_number] = chapter_link
+        chapter_link = (str(chapter)).split('href="')[1].split('" ')[0] 
+        chapters[chapter_number] = chapter_link    
     
-    return chapter_link
+    return chapters
 
 def get_chapter(link: str):
     
@@ -110,3 +109,19 @@ def find_src(soup: str):
     return links
     
 
+def download(link, title, dir, name):
+    
+    r = requests.get(link)
+    
+    if r.status_code != 200:
+        return 
+    
+    try: 
+        os.makedirs(f"../.venv/Manga/{title}/{dir}")
+        with open(f"../.venv/Manga/{title}/{dir}/{name}.jpeg", 'wb') as f:
+            f.write(r.content)
+    
+    except Exception as e:
+        print(e)
+        
+        
