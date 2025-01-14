@@ -1,12 +1,11 @@
 from bs4 import BeautifulSoup
 import requests
-import os
 from time import sleep
 from re import sub
-
-
-
-
+from Application.database import insert
+from tqdm import tqdm
+from os import makedirs
+from time import sleep
 def read_link() -> str:
     """_summary_
         read the link from the Env File
@@ -42,8 +41,25 @@ def get_manga(soup: BeautifulSoup, con) -> None:
         genre = get_genre(str(manga.find_all("div", {"class": "flex flex-wrap text-xs opacity-70"})))
         main_page = get_main_page(str(manga.find_all("a", {"class": "link-hover link-pri"})))        
         status, chapters = get_main_page_info(main_page)
-        print(f"Title: {title}\nGenre: {genre}\nThumpnail: {thumnpnail}\nMain Page: {main_page} \nChapter: {chapters}\n" )
-        break
+        title = sub(r"\W+", " ", title).lstrip(" ").rstrip(" ")   
+        
+        if not thumnpnail.__contains__('.png'):
+            download(
+            link = thumnpnail,
+            title = title,
+            dir = 'thumpnail',
+            name = 'thumpnail'
+            )
+        
+            insert(
+            title=title,
+            genre=str(genre),
+            thumpnail=f"../.venv/Manga/{title}/{"thumpnail"}/{"thumpnail"}.jpeg",
+            main=main_page,
+            chapter=str(chapters), 
+            con = con, 
+            )
+        # print(f"Title: {title}\nThumpnail: {thumnpnail}\nGenre: {genre}\nMain: {main_page}\nChapter: {chapters}\n")
         
 
 def get_title_thumpnail(soup: str) -> tuple:
@@ -70,14 +86,13 @@ def get_genre(soup: str) -> tuple:
     return manga_genre
     
 def get_main_page_info(link: str):
-    full_link = f"{read_link()[0:-8]}{link}"
+    full_link = f"{read_link()[0:-7]}{link}"
+
     soup = get_page(full_link)
-    
     if soup[0] == False:
         return False, 0
     
     chapters = get_all_available_chapter(soup[1])
-
     return True, chapters
     
 
@@ -87,6 +102,7 @@ def get_all_available_chapter(soup):
     for chapter in soup.find_all("a", {"class": "link-hover link-primary visited:text-accent"}):
         chapter_number = (str(chapter)).split('">')[-1].split("<")[0]
         chapter_link = (str(chapter)).split('href="')[1].split('" ')[0] 
+        chapter_number = sub(r"\W+", " ", chapter_number).lstrip(" ").rstrip(" ")   
         chapters[chapter_number] = chapter_link    
     
     return chapters
@@ -117,11 +133,19 @@ def download(link, title, dir, name):
         return 
     
     try: 
-        os.makedirs(f"../.venv/Manga/{title}/{dir}")
-        with open(f"../.venv/Manga/{title}/{dir}/{name}.jpeg", 'wb') as f:
+        makedirs(f".venv/Manga/{title}/{dir}")
+        with open(f".venv/Manga/{title}/{dir}/{name}.jpeg", 'wb') as f:
             f.write(r.content)
     
     except Exception as e:
         print(e)
         
-        
+def refresh(con):
+    website_link = read_link()
+    for i in tqdm(range(1, 100)):
+        current_page = website_link + f"/{i}"
+        get_manga(
+            soup= get_page(current_page)[1],
+            con = con
+        )
+        sleep(5)

@@ -3,7 +3,7 @@ import sqlite3
 
 def create_database():
     
-    con = sqlite3.connect("../.venv/Manga.db")
+    con = sqlite3.connect(".venv/Manga.db")
     cursor = con.cursor()
     cursor.execute("""CREATE TABLE Manga (
         Title varchar(500),
@@ -16,7 +16,7 @@ def create_database():
     
     
 def get_con() -> sqlite3.Connection:
-    con = sqlite3.connect("Manga.db")
+    con = sqlite3.connect(".venv/Manga.db")
     return con
 
 
@@ -32,3 +32,12 @@ def insert(title: str, genre: str, thumpnail: str, main: str, chapter: str,  con
     
     
     
+def read():
+    con = get_con()
+    cursor = con.cursor()
+    for i in cursor.execute(f"SELECT * FROM Manga"):
+        print(i)
+
+# create_database()
+
+# print(get_con())
